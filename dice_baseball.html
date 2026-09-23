@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 숫자 야구 (Dice Baseball)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-amber-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-baseball-bat-ball"></i> 주사위 숫자 야구
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위 3개를 던져 비밀 숫자(1~6) 조합을 추리하세요!</p>
+
+        <!-- Current Dice -->
+        <div id="dice-display" class="flex justify-center gap-3 text-4xl mb-6">
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+        </div>
+
+        <button onclick="pitch()" class="w-full bg-amber-600 hover:bg-amber-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-amber-900/40 mb-6">
+            ⚾ 주사위 3개 투척 & 판정
+        </button>
+
+        <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 text-left">
+            <div class="text-xs font-bold text-slate-400 mb-2 flex justify-between">
+                <span>투구 기록 로그</span>
+                <span id="try-count" class="text-amber-400">0회 시도</span>
+            </div>
+            <div id="logs" class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1"></div>
+        </div>
+
+        <button onclick="initGame()" class="mt-4 text-xs text-slate-400 hover:text-slate-200">새 게임 시작</button>
+    </div>
+
+    <script>
+        let secret = [], attempts = 0;
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function initGame() {
+            secret = []; attempts = 0;
+            while(secret.length < 3) {
+                let r = Math.floor(Math.random() * 6) + 1;
+                if(!secret.includes(r)) secret.push(r);
+            }
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('try-count').innerText = '0회 시도';
+        }
+
+        function pitch() {
+            if(secret.length === 0) return;
+            attempts++;
+            let roll = [];
+            while(roll.length < 3) {
+                let r = Math.floor(Math.random() * 6) + 1;
+                if(!roll.includes(r)) roll.push(r);
+            }
+
+            document.getElementById('dice-display').innerHTML = roll.map(v => 
+                `<div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">${diceIcons[v]}</div>`
+            ).join('');
+
+            let strike = 0, ball = 0;
+            for(let i=0; i<3; i++) {
+                if(roll[i] === secret[i]) strike++;
+                else if(secret.includes(roll[i])) ball++;
+            }
+
+            const log = document.createElement('div');
+            log.className = "flex justify-between items-center bg-slate-800/50 p-2 rounded-lg border border-slate-700/50";
+            log.innerHTML = `
+                <span class="font-bold text-slate-300">#${attempts}차: [${roll.join(', ')}]</span>
+                <span class="font-black ${strike === 3 ? 'text-emerald-400' : 'text-amber-400'}">${strike}S ${ball}B</span>
+            `;
+            document.getElementById('logs').prepend(log);
+            document.getElementById('try-count').innerText = attempts + '회 시도';
+
+            if(strike === 3) {
+                setTimeout(() => {
+                    alert(`🎉 정답입니다! ${attempts}회 만에 삼진 아웃 성공!`);
+                    initGame();
+                }, 100);
+            }
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

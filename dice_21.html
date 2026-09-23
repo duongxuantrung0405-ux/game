@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 21 맞추기 (Dice 21)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-purple-400 mb-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bullseye"></i> 주사위 21 맞추기
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 던져 21 이하로 컴퓨터보다 높은 합을 만드세요!</p>
+
+        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-700 mb-6">
+            <div class="text-xs text-slate-400 mb-1">나의 합계</div>
+            <div id="score" class="text-5xl font-black text-purple-300">0</div>
+            <div id="dice-history" class="text-xs text-slate-400 mt-3 min-h-[20px]">사용한 주사위: -</div>
+        </div>
+
+        <div id="msg" class="text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400">
+            [던지기] 또는 [멈추기]를 선택하세요.
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <button id="btn-roll" onclick="roll()" class="bg-purple-600 hover:bg-purple-500 py-3 rounded-2xl font-bold shadow-lg shadow-purple-900/40">🎲 던지기 (Hit)</button>
+            <button id="btn-stand" onclick="stand()" class="bg-slate-700 hover:bg-slate-600 py-3 rounded-2xl font-bold border border-slate-600">✋ 멈추기 (Stand)</button>
+        </div>
+
+        <button onclick="resetGame()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">
+            새 게임 시작
+        </button>
+    </div>
+
+    <script>
+        let total = 0, history = [], playing = true;
+
+        function roll() {
+            if(!playing) return;
+            const dice = Math.floor(Math.random() * 6) + 1;
+            total += dice;
+            history.push(dice);
+
+            document.getElementById('score').innerText = total;
+            document.getElementById('dice-history').innerText = '사용한 주사위: ' + history.join(', ');
+
+            if(total > 21) {
+                playing = false;
+                document.getElementById('msg').innerText = '💥 21 초과! 버스트 패배!';
+                document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-rose-400';
+            } else if(total === 21) {
+                playing = false;
+                document.getElementById('msg').innerText = '🎉 PERFECT 21! 승리!';
+                document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-emerald-400';
+            }
+        }
+
+        function stand() {
+            if(!playing || total === 0) return;
+            playing = false;
+
+            // Computer turn logic
+            let compTotal = 0;
+            while(compTotal < 16) {
+                compTotal += Math.floor(Math.random() * 6) + 1;
+            }
+
+            const msgEl = document.getElementById('msg');
+            if(compTotal > 21 || total > compTotal) {
+                msgEl.innerText = `🎉 승리! (나: ${total}점 vs 컴퓨터: ${compTotal > 21 ? '버스트' : compTotal + '점'})`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-emerald-400';
+            } else if(compTotal > total) {
+                msgEl.innerText = `💀 패배! (나: ${total}점 vs 컴퓨터: ${compTotal}점)`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-rose-400';
+            } else {
+                msgEl.innerText = `🤝 무승부! (${total}점 동점)`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400';
+            }
+        }
+
+        function resetGame() {
+            total = 0; history = []; playing = true;
+            document.getElementById('score').innerText = '0';
+            document.getElementById('dice-history').innerText = '사용한 주사위: -';
+            document.getElementById('msg').innerText = '[던지기] 또는 [멈추기]를 선택하세요.';
+            document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400';
+        }
+    </script>
+</body>
+</html>

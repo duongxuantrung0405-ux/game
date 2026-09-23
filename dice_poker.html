@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 포커 (Dice Poker)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-blue-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gem"></i> 주사위 포커
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 터치하여 **고정(Hold)**하고 재투척하세요!</p>
+
+        <!-- Dice Row -->
+        <div id="dice-container" class="flex justify-center gap-2 mb-6">
+            <!-- Dynamic 5 Dices -->
+        </div>
+
+        <div id="rank-text" class="text-lg font-black text-amber-300 h-8 flex items-center justify-center mb-6">
+            주사위를 던져주세요
+        </div>
+
+        <button onclick="roll()" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-900/40 mb-3">
+            🎲 주사위 던지기
+        </button>
+
+        <button onclick="resetHand()" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs text-slate-300">
+            고정 해제 & 리셋
+        </button>
+    </div>
+
+    <script>
+        let values = [1, 1, 1, 1, 1];
+        let holds = [false, false, false, false, false];
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function render() {
+            const container = document.getElementById('dice-container');
+            container.innerHTML = '';
+            values.forEach((v, i) => {
+                const btn = document.createElement('button');
+                btn.className = `text-3xl p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center ${holds[i] ? 'border-amber-400 bg-amber-500/20 scale-105' : 'border-slate-700 bg-slate-900/80'}`;
+                btn.innerHTML = `<span>${diceIcons[v]}</span><span class="text-[10px] font-bold mt-1 ${holds[i] ? 'text-amber-400' : 'text-slate-500'}">${holds[i] ? 'HOLD' : 'FREE'}</span>`;
+                btn.onclick = () => { holds[i] = !holds[i]; render(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function roll() {
+            for(let i=0; i<5; i++) {
+                if(!holds[i]) values[i] = Math.floor(Math.random() * 6) + 1;
+            }
+            render();
+            evaluateHand();
+        }
+
+        function evaluateHand() {
+            const counts = {};
+            values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            const cVals = Object.values(counts).sort((a,b) => b-a);
+
+            let rank = "High Card (노족보)";
+            if(cVals[0] === 5) rank = "Five of a Kind! 👑";
+            else if(cVals[0] === 4) rank = "Four of a Kind! 🔥";
+            else if(cVals[0] === 3 && cVals[1] === 2) rank = "Full House! 🏠";
+            else if(cVals[0] === 3) rank = "Three of a Kind! ✨";
+            else if(cVals[0] === 2 && cVals[1] === 2) rank = "Two Pair! ✌️";
+            else if(cVals[0] === 2) rank = "One Pair! 🔹";
+
+            document.getElementById('rank-text').innerText = rank;
+        }
+
+        function resetHand() {
+            holds = [false, false, false, false, false];
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>

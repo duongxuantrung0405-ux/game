@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 레이싱 (Dice Race)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center">
+        <h1 class="text-2xl font-black text-emerald-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-flag-checkered"></i> 주사위 레이싱
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 던져 30번째 결승선에 먼저 도착하세요!</p>
+
+        <!-- Progress Bars -->
+        <div class="space-y-4 mb-6">
+            <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-blue-400"><i class="fa-solid fa-car"></i> 플레이어</span>
+                    <span id="p-pos" class="text-slate-300">0 / 30</span>
+                </div>
+                <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden">
+                    <div id="p-bar" class="bg-blue-500 h-full w-0% transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-rose-400"><i class="fa-solid fa-robot"></i> 컴퓨터</span>
+                    <span id="c-pos" class="text-slate-300">0 / 30</span>
+                </div>
+                <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden">
+                    <div id="c-bar" class="bg-rose-500 h-full w-0% transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="log" class="text-sm font-bold text-amber-300 h-8 flex items-center justify-center mb-6">
+            주사위를 던져 전진하세요!
+        </div>
+
+        <button onclick="step()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-900/40">
+            🎲 주사위 던지기
+        </button>
+
+        <button onclick="resetGame()" class="mt-4 text-xs text-slate-400 hover:text-slate-200">
+            재경기 시작
+        </button>
+    </div>
+
+    <script>
+        let pPos = 0, cPos = 0;
+
+        function step() {
+            if(pPos >= 30 || cPos >= 30) return;
+
+            const pRoll = Math.floor(Math.random() * 6) + 1;
+            const cRoll = Math.floor(Math.random() * 6) + 1;
+
+            pPos = Math.min(30, pPos + pRoll);
+            cPos = Math.min(30, cPos + cRoll);
+
+            // Special event logic (Booster / Trap)
+            let pEvent = "", cEvent = "";
+            if(pPos === 10 || pPos === 20) { pPos += 3; pEvent = "🚀 부스터 (+3)!"; }
+            if(pPos === 15 || pPos === 25) { pPos = Math.max(0, pPos - 3); pEvent = "⚠️ 함정 (-3)!"; }
+
+            updateUI();
+
+            const logEl = document.getElementById('log');
+            if(pPos >= 30 && cPos >= 30) logEl.innerText = "🤝 동시 도착! 무승부!";
+            else if(pPos >= 30) logEl.innerText = "🎉 플레이어 결승선 도착! 승리!";
+            else if(cPos >= 30) logEl.innerText = "💀 컴퓨터 결승선 도착! 패배!";
+            else logEl.innerText = `나: +${pRoll} ${pEvent} | 컴퓨터: +${cRoll}`;
+        }
+
+        function updateUI() {
+            document.getElementById('p-pos').innerText = `${pPos} / 30`;
+            document.getElementById('c-pos').innerText = `${cPos} / 30`;
+            document.getElementById('p-bar').style.width = (pPos / 30 * 100) + '%';
+            document.getElementById('c-bar').style.width = (cPos / 30 * 100) + '%';
+        }
+
+        function resetGame() {
+            pPos = 0; cPos = 0;
+            updateUI();
+            document.getElementById('log').innerText = "주사위를 던져 전진하세요!";
+        }
+    </script>
+</body>
+</html>

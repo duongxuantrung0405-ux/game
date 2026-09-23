@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1대1 주사위 대결 (Dice Battle)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+        .dice-box { transition: transform 0.3s ease; }
+        .rolling { animation: shake 0.4s infinite; }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg) scale(1.1); }
+            75% { transform: rotate(-10deg) scale(0.9); }
+            100% { transform: rotate(0deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-indigo-400 mb-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-hand-fist"></i> 1대1 주사위 대결
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위 숫자가 높은 사람이 상대방에게 데미지를 입힙니다.</p>
+
+        <!-- HP Bars -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-indigo-400">플레이어</span>
+                    <span id="p-hp-text" class="text-slate-300">HP 100</span>
+                </div>
+                <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                    <div id="p-hp-bar" class="bg-indigo-500 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+            <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-rose-400">컴퓨터</span>
+                    <span id="c-hp-text" class="text-slate-300">HP 100</span>
+                </div>
+                <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                    <div id="c-hp-bar" class="bg-rose-500 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Displays -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-700/50 p-4 rounded-2xl border border-slate-600 flex flex-col items-center">
+                <div id="p-dice" class="dice-box text-6xl text-indigo-400 my-2">🎲</div>
+                <div id="p-val" class="text-sm font-bold text-slate-300">준비</div>
+            </div>
+            <div class="bg-slate-700/50 p-4 rounded-2xl border border-slate-600 flex flex-col items-center">
+                <div id="c-dice" class="dice-box text-6xl text-rose-400 my-2">🎲</div>
+                <div id="c-val" class="text-sm font-bold text-slate-300">준비</div>
+            </div>
+        </div>
+
+        <div id="result" class="text-base font-bold mb-6 h-8 flex items-center justify-center text-amber-400">
+            주사위를 던져 대결을 시작하세요!
+        </div>
+
+        <button id="btn-roll" onclick="roll()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3.5 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-900/50 transition">
+            주사위 던지기
+        </button>
+        <button onclick="resetGame()" class="mt-3 text-xs text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-rotate-right"></i> 게임 리셋
+        </button>
+    </div>
+
+    <script>
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+        let playerHp = 100, compHp = 100, isRolling = false;
+
+        function playBeep(freq = 440) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        function roll() {
+            if(isRolling || playerHp <= 0 || compHp <= 0) return;
+            isRolling = true;
+            playBeep(520);
+
+            const pDiceEl = document.getElementById('p-dice');
+            const cDiceEl = document.getElementById('c-dice');
+            pDiceEl.classList.add('rolling');
+            cDiceEl.classList.add('rolling');
+
+            setTimeout(() => {
+                pDiceEl.classList.remove('rolling');
+                cDiceEl.classList.remove('rolling');
+
+                const pVal = Math.floor(Math.random() * 6) + 1;
+                const cVal = Math.floor(Math.random() * 6) + 1;
+
+                pDiceEl.innerText = diceIcons[pVal];
+                cDiceEl.innerText = diceIcons[cVal];
+                document.getElementById('p-val').innerText = pVal + ' 점';
+                document.getElementById('c-val').innerText = cVal + ' 점';
+
+                const resEl = document.getElementById('result');
+                const diff = Math.abs(pVal - cVal) * 10;
+
+                if(pVal > cVal) {
+                    compHp = Math.max(0, compHp - diff);
+                    resEl.innerText = `🎉 플레이어 승! 컴퓨터에게 ${diff} 데미지!`;
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-emerald-400';
+                    playBeep(880);
+                } else if(cVal > pVal) {
+                    playerHp = Math.max(0, playerHp - diff);
+                    resEl.innerText = `💥 컴퓨터 승! 플레이어에게 ${diff} 데미지!`;
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-rose-400';
+                    playBeep(220);
+                } else {
+                    resEl.innerText = '🤝 무승부! 데미지 없음';
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-amber-400';
+                }
+
+                updateHp();
+                isRolling = false;
+            }, 600);
+        }
+
+        function updateHp() {
+            document.getElementById('p-hp-text').innerText = `HP ${playerHp}`;
+            document.getElementById('c-hp-text').innerText = `HP ${compHp}`;
+            document.getElementById('p-hp-bar').style.width = playerHp + '%';
+            document.getElementById('c-hp-bar').style.width = compHp + '%';
+
+            if(playerHp <= 0) {
+                document.getElementById('result').innerText = '☠️ 패배하셨습니다. 다시 도전하세요!';
+                document.getElementById('btn-roll').disabled = true;
+            } else if(compHp <= 0) {
+                document.getElementById('result').innerText = '🏆 최종 승리하셨습니다!';
+                document.getElementById('btn-roll').disabled = true;
+            }
+        }
+
+        function resetGame() {
+            playerHp = 100; compHp = 100; isRolling = false;
+            document.getElementById('p-dice').innerText = '🎲';
+            document.getElementById('c-dice').innerText = '🎲';
+            document.getElementById('p-val').innerText = '준비';
+            document.getElementById('c-val').innerText = '준비';
+            document.getElementById('result').innerText = '주사위를 던져 대결을 시작하세요!';
+            document.getElementById('btn-roll').disabled = false;
+            updateHp();
+        }
+    </script>
+</body>
+</html>

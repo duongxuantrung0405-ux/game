@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="ko"><head><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIxMjg4OTE5NjI0Mzg0ODY0OTQ5OSIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjX2E5ZWZiMzA5M2IwMDYxMTJfaW5kZXguaHRtbC0yNTYifSwiZXhwIjoxNzkwMTQ1ODg2LCJpYXQiOjE3OTAxNDIyODYsImFsZyI6IlJTMjU2In0.c0nQLcdY-upf7R0jVsl-k1u5Ba-8eu1OQndFs7Sekrhw8Rr6BjH6qneiFkizgpuRTS6vNUb1emuNG5I-tH9jLaUI5XFHOH97xYqEJ_Lleo3ciEbdMPgoJHg78qKAVDbv-6ieau48AStNvrs9GbSDSHYW7_dB0_iU-MFLDZ9wKFDRQrqwYCNIq0J0nF0tU9B_LIyiTJNzA_MnujiwV-svkYcqLo6tOn5wVgYqBNfsCcK6CztPyLRHrWbKkXL--IR_tFZgu98TX2ZZt_ooBlgj5sX4WKCqv1AtmPkcCDocg5UfUY-FL6BS8QJynNvK3nzktVk2sGBJlw4u-Us95kh72A","c_a9efb3093b006112_index.html-256")</script><script data-bard-client-injected="true">
+  document.addEventListener('input', (event) => {
+    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
+      const clonedDoc = document.cloneNode(true);
+      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
+      injectedScripts.forEach(el => el.remove());
+      window.parent.postMessage({
+        type: 'inlineEdit',
+        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
+      }, '*');
+    }
+  });
+</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const SCROLL_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
+  ]);
+  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
+
+  function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' || target.isContentEditable === true;
+  }
+
+  // An element absorbs the key only if it both overflows on the axis being
+  // scrolled and is configured to scroll on that axis. The cheap dimension
+  // test runs first because getComputedStyle forces a style recalc, and this
+  // runs on every keypress. Each axis is read from its own longhand: the
+  // 'overflow' shorthand serializes as two values when the axes differ, which
+  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
+  function canScroll(node, horizontal) {
+    const overflows = horizontal ? node.scrollWidth > node.clientWidth
+                                 : node.scrollHeight > node.clientHeight;
+    if (!overflows) return false;
+    const style = window.getComputedStyle(node);
+    const overflow = horizontal ? style.overflowX : style.overflowY;
+    return overflow === 'auto' || overflow === 'scroll';
+  }
+
+  // Walks up from the event target so nested scrollers keep their behavior.
+  // <body> is included because pages that pin the root height make it the
+  // scroll container.
+  function hasScrollableAncestor(target, horizontal) {
+    let node = target;
+    while (node && node !== document.documentElement) {
+      if (canScroll(node, horizontal)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function rootCanScroll(horizontal) {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) return false;
+    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
+    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
+                      : scroller.scrollHeight > window.innerHeight + 1;
+  }
+
+  window.addEventListener('keydown', function(event) {
+    if (!SCROLL_KEYS.has(event.key)) return;
+    if (event.defaultPrevented) return;
+    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
+    // reserved for shortcuts, so none of them are scroll intent.
+    if (event.altKey || event.metaKey || event.ctrlKey) return;
+
+    const target = event.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Anything that can still absorb the scroll gets to keep it.
+    const horizontal = HORIZONTAL_KEYS.has(event.key);
+    if (rootCanScroll(horizontal)) return;
+    if (hasScrollableAncestor(target, horizontal)) return;
+
+    event.preventDefault();
+  }, {capture: true, passive: false});
+})();</script><script data-bard-client-injected="true">(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script data-bard-client-injected="true">
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
+function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
+
+ Copyright The Closure Library Authors.
+ SPDX-License-Identifier: Apache-2.0
+*/
+function A(b,d){function e(){}e.prototype=d.prototype;b.j=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
+let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
+null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.i="";var l=0,t=null,r=null,q=[],F=new TextEncoder,G=new TextDecoder;
+c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*16|0;return(f===
+"x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;(g=t)==null||g.postMessage(a)}};
+Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
+(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
+url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
+</script><script data-bard-client-injected="true">((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 아케이드 허브 &amp; 다운로드 센터 (Dice Arcade Hub)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip for ZIP file generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;800&family=Poppins:wght@600;800&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', 'Poppins', sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.-bottom-10{bottom:-2.5rem}.-right-10{right:-2.5rem}.top-0{top:0px}.z-30{z-index:30}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mb-2{margin-bottom:0.5rem}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-7xl{max-width:80rem}.max-w-6xl{max-width:72rem}.flex-1{flex:1 1 0%}.resize-none{resize:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.rounded-md{border-radius:0.375rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-none{border-style:none}.border-indigo-400\/30{border-color:rgb(129 140 248 / 0.3)}.border-indigo-500\/20{border-color:rgb(99 102 241 / 0.2)}.border-indigo-500\/30{border-color:rgb(99 102 241 / 0.3)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-slate-800\/80{border-color:rgb(30 41 59 / 0.8)}.border-amber-500\/30{border-color:rgb(245 158 11 / 0.3)}.border-blue-500\/30{border-color:rgb(59 130 246 / 0.3)}.border-emerald-500\/30{border-color:rgb(16 185 129 / 0.3)}.border-pink-500\/30{border-color:rgb(236 72 153 / 0.3)}.border-purple-500\/30{border-color:rgb(168 85 247 / 0.3)}.border-slate-700\/50{border-color:rgb(51 65 85 / 0.5)}.bg-indigo-500\/20{background-color:rgb(99 102 241 / 0.2)}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229 / var(--tw-bg-opacity, 1))}.bg-indigo-600\/90{background-color:rgb(79 70 229 / 0.9)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-800\/80{background-color:rgb(30 41 59 / 0.8)}.bg-slate-900\/80{background-color:rgb(15 23 42 / 0.8)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-slate-950\/60{background-color:rgb(2 6 23 / 0.6)}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.bg-transparent{background-color:transparent}.bg-amber-500\/20{background-color:rgb(245 158 11 / 0.2)}.bg-blue-500\/20{background-color:rgb(59 130 246 / 0.2)}.bg-emerald-500\/20{background-color:rgb(16 185 129 / 0.2)}.bg-pink-500\/20{background-color:rgb(236 72 153 / 0.2)}.bg-purple-500\/20{background-color:rgb(168 85 247 / 0.2)}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.bg-gradient-to-tr{background-image:linear-gradient(to top right, var(--tw-gradient-stops))}.from-emerald-500{--tw-gradient-from:#10b981 var(--tw-gradient-from-position);--tw-gradient-to:rgb(16 185 129 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-indigo-400{--tw-gradient-from:#818cf8 var(--tw-gradient-from-position);--tw-gradient-to:rgb(129 140 248 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-indigo-600{--tw-gradient-from:#4f46e5 var(--tw-gradient-from-position);--tw-gradient-to:rgb(79 70 229 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-purple-300{--tw-gradient-to:rgb(216 180 254 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #d8b4fe var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-pink-400{--tw-gradient-to:#f472b6 var(--tw-gradient-to-position)}.to-pink-500{--tw-gradient-to:#ec4899 var(--tw-gradient-to-position)}.to-teal-600{--tw-gradient-to:#0d9488 var(--tw-gradient-to-position)}.bg-clip-text{-webkit-background-clip:text;background-clip:text}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-9xl{font-size:8rem;line-height:1}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.font-black{font-weight:900}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-indigo-300{--tw-text-opacity:1;color:rgb(165 180 252 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-transparent{color:transparent}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-pink-400{--tw-text-opacity:1;color:rgb(244 114 182 / var(--tw-text-opacity, 1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity, 1))}.opacity-10{opacity:0.1}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-emerald-900\/40{--tw-shadow-color:rgb(6 78 59 / 0.4);--tw-shadow:var(--tw-shadow-colored)}.shadow-indigo-500\/30{--tw-shadow-color:rgb(99 102 241 / 0.3);--tw-shadow:var(--tw-shadow-colored)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-200{transition-duration:200ms}.duration-300{transition-duration:300ms}.selection\:bg-indigo-500 *::selection{--tw-bg-opacity:1;background-color:rgb(99 102 241 / var(--tw-bg-opacity, 1))}.selection\:text-white *::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.selection\:bg-indigo-500::selection{--tw-bg-opacity:1;background-color:rgb(99 102 241 / var(--tw-bg-opacity, 1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:border-indigo-500\/50:hover{border-color:rgb(99 102 241 / 0.5)}.hover\:bg-indigo-500:hover{--tw-bg-opacity:1;background-color:rgb(99 102 241 / var(--tw-bg-opacity, 1))}.hover\:bg-rose-600:hover{--tw-bg-opacity:1;background-color:rgb(225 29 72 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-600:hover{--tw-bg-opacity:1;background-color:rgb(71 85 105 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-600:hover{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.hover\:from-emerald-400:hover{--tw-gradient-from:#34d399 var(--tw-gradient-from-position);--tw-gradient-to:rgb(52 211 153 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.hover\:to-teal-500:hover{--tw-gradient-to:#14b8a6 var(--tw-gradient-to-position)}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.group:hover .group-hover\:scale-110{--tw-scale-x:1.1;--tw-scale-y:1.1;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@media (min-width: 640px){.sm\:p-6{padding:1.5rem}.sm\:p-8{padding:2rem}.sm\:px-8{padding-left:2rem;padding-right:2rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}}@media (min-width: 1024px){.lg\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}}</style></head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md px-4 sm:px-8 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-3 rounded-2xl shadow-lg shadow-indigo-500/30 text-white text-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-dice-d6"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+                        DICE ARCADE HUB
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">독립형 주사위 게임 6종 &amp; `index.html` 전체 다운로드 센터</p>
+                </div>
+            </div>
+
+            <!-- Top Action Buttons -->
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="downloadSelfIndex()" class="bg-indigo-600/90 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition duration-200 flex items-center gap-2 border border-indigo-400/30">
+                    <i class="fa-solid fa-code"></i> index.html 다운로드
+                </button>
+                <button onclick="downloadAllZip()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs sm:text-sm font-extrabold py-2.5 px-5 rounded-xl shadow-lg shadow-emerald-900/40 transition duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-file-zipper"></i> 전체 7개 파일 (ZIP) 다운로드
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 flex-1 w-full">
+        <!-- Hero Banner -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 mb-8 border border-indigo-500/20 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl text-indigo-400 pointer-events-none">
+                <i class="fa-solid fa-dice"></i>
+            </div>
+            <div class="max-w-2xl">
+                <span class="inline-block bg-indigo-500/20 text-indigo-300 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/30 mb-3">
+                    ALL-IN-ONE HTML GAMING SUITE
+                </span>
+                <h2 class="text-2xl sm:text-4xl font-black text-white mb-3">
+                    웹 브라우저에서 바로 즐기는 6가지 주사위 게임
+                </h2>
+                <p class="text-sm sm:text-base text-slate-300 leading-relaxed mb-4">
+                    모든 게임은 외부에 대한 의존성 없이 단 하나의 독립형 HTML 파일로 작동하도록 제작되었습니다. 아래에서 게임을 직접플레이하거나 소스 코드를 확인하고 단일 HTML로 다운로드해 보세요.
+                </p>
+                <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-400">
+                    <span class="bg-slate-800/80 px-3 py-1 rounded-lg border border-slate-700">✓ No Server Required</span>
+                    <span class="bg-slate-800/80 px-3 py-1 rounded-lg border border-slate-700">✓ Pure JavaScript &amp; Web Audio</span>
+                    <span class="bg-slate-800/80 px-3 py-1 rounded-lg border border-slate-700">✓ Mobile &amp; Touch Friendly</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Title -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-indigo-400"></i> 게임 라인업
+            </h3>
+            <span class="text-xs text-slate-400">총 6개 게임 제공</span>
+        </div>
+
+        <!-- Games Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="games-grid">
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-indigo-500/20 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/30">
+                                1v1 Battle
+                            </span>
+                            <div class="text-indigo-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-hand-fist"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">1대1 주사위 대결</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">컴퓨터와 1대1로 주사위를 던져 숫자가 높은 사람이 체력을 깎는 클래식 한판 대결 게임입니다.</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#1v1</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Casual</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Fast</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('dice_battle')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('dice_battle')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('dice_battle')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> dice_battle.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-purple-500/20 text-purple-400 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
+                                Strategy
+                            </span>
+                            <div class="text-purple-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">주사위 21 맞추기</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">블랙잭 스타일의 주사위 게임! 숫자를 21에 가장 가깝게 만들어 컴퓨터보다 높게 만드세요.</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Blackjack</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Risk</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#21</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('dice_21')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('dice_21')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('dice_21')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> dice_21.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-pink-500/20 text-pink-400 text-xs font-bold px-3 py-1 rounded-full border border-pink-500/30">
+                                Risk &amp; Reward
+                            </span>
+                            <div class="text-pink-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-piggy-bank"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">피그 게임 (Pig Game)</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">욕심과 절제의 주사위 게임! 주사위 1이 나오면 이번 턴 점수를 모두 잃습니다 (목표: 50점).</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Push Your Luck</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#2 Players</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#50 Pts</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('pig_game')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('pig_game')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('pig_game')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> pig_game.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/30">
+                                Deduction
+                            </span>
+                            <div class="text-amber-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-baseball-bat-ball"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">주사위 숫자 야구</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">컴퓨터의 비밀 숫자 조합을 주사위 3개를 던져 스트라이크/볼 힌트로 맞히는 추리 게임입니다.</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Baseball</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Puzzle</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Logic</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('dice_baseball')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('dice_baseball')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('dice_baseball')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> dice_baseball.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-500/30">
+                                Racing
+                            </span>
+                            <div class="text-emerald-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-flag-checkered"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">주사위 레이싱</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">특수 칸(부스터, 뒤로 가기)이 설치된 30칸 레이스 트랙에서 1등으로 도착하는 경주 게임입니다.</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Race</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Board Game</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Speed</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('dice_race')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('dice_race')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('dice_race')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> dice_race.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/30">
+                                Poker
+                            </span>
+                            <div class="text-blue-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid fa-gem"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">주사위 포커 (Dice Poker)</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">주사위 5개를 던지고 필요한 눈을 고정(Hold)해 풀하우스, 파이브 카인드 등의 족보를 완성하세요.</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Poker</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Hold</span><span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#Cards</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('dice_poker')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('dice_poker')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('dice_poker')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> dice_poker.html 다운로드
+                        </button>
+                    </div>
+                </div>
+            </div>
+    </main>
+
+    <footer class="border-t border-slate-800/80 bg-slate-950/60 py-6 px-4 text-center text-xs text-slate-500">
+        <p>Dice Arcade Hub &amp; Download Center © 2026 - 모든 파일은 완전한 단일 HTML 파일 형태로 제공됩니다.</p>
+    </footer>
+
+    <!-- Game Play Modal -->
+    <div id="play-modal" class="fixed inset-0 z-50 hidden flex flex-col glass-modal p-4 sm:p-6 transition-all duration-300">
+        <div class="flex justify-between items-center mb-4 max-w-7xl mx-auto w-full">
+            <div class="flex items-center gap-3">
+                <span id="modal-game-title" class="text-xl font-bold text-white"></span>
+                <span id="modal-game-file" class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg border border-slate-700 font-mono"></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="modal-download-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-download"></i> 다운로드
+                </button>
+                <button onclick="closePlayModal()" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white p-2 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 max-w-7xl mx-auto w-full bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl relative">
+            <iframe id="game-iframe" class="w-full h-full border-none"></iframe>
+        </div>
+    </div>
+
+    <!-- Code Viewer Modal -->
+    <div id="code-modal" class="fixed inset-0 z-50 hidden flex flex-col glass-modal p-4 sm:p-6 transition-all duration-300">
+        <div class="flex justify-between items-center mb-4 max-w-6xl mx-auto w-full">
+            <div>
+                <h3 id="code-modal-title" class="text-xl font-bold text-white">소스코드 보기</h3>
+                <p id="code-modal-file" class="text-xs text-indigo-400 font-mono"></p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copyCode()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-copy"></i> 복사하기
+                </button>
+                <button id="code-modal-download-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-download"></i> 다운로드
+                </button>
+                <button onclick="closeCodeModal()" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white p-2 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 max-w-6xl mx-auto w-full bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden p-4 relative">
+            <textarea id="code-textarea" readonly="" class="w-full h-full bg-transparent text-emerald-400 font-mono text-xs p-2 focus:outline-none resize-none leading-relaxed"></textarea>
+        </div>
+    </div>
+
+    <script>
+        // Data for all 6 standalone HTML games
+        const gamesData = [
+            {
+                id: 'dice_battle',
+                title: '1대1 주사위 대결',
+                filename: 'dice_battle.html',
+                badge: '1v1 Battle',
+                color: 'indigo',
+                icon: 'fa-hand-fist',
+                desc: '컴퓨터와 1대1로 주사위를 던져 숫자가 높은 사람이 체력을 깎는 클래식 한판 대결 게임입니다.',
+                tags: ['1v1', 'Casual', 'Fast'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1대1 주사위 대결 (Dice Battle)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+        .dice-box { transition: transform 0.3s ease; }
+        .rolling { animation: shake 0.4s infinite; }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg) scale(1.1); }
+            75% { transform: rotate(-10deg) scale(0.9); }
+            100% { transform: rotate(0deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-indigo-400 mb-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-hand-fist"></i> 1대1 주사위 대결
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위 숫자가 높은 사람이 상대방에게 데미지를 입힙니다.</p>
+
+        <!-- HP Bars -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-indigo-400">플레이어</span>
+                    <span id="p-hp-text" class="text-slate-300">HP 100</span>
+                </div>
+                <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                    <div id="p-hp-bar" class="bg-indigo-500 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+            <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-rose-400">컴퓨터</span>
+                    <span id="c-hp-text" class="text-slate-300">HP 100</span>
+                </div>
+                <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                    <div id="c-hp-bar" class="bg-rose-500 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Displays -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-700/50 p-4 rounded-2xl border border-slate-600 flex flex-col items-center">
+                <div id="p-dice" class="dice-box text-6xl text-indigo-400 my-2">🎲</div>
+                <div id="p-val" class="text-sm font-bold text-slate-300">준비</div>
+            </div>
+            <div class="bg-slate-700/50 p-4 rounded-2xl border border-slate-600 flex flex-col items-center">
+                <div id="c-dice" class="dice-box text-6xl text-rose-400 my-2">🎲</div>
+                <div id="c-val" class="text-sm font-bold text-slate-300">준비</div>
+            </div>
+        </div>
+
+        <div id="result" class="text-base font-bold mb-6 h-8 flex items-center justify-center text-amber-400">
+            주사위를 던져 대결을 시작하세요!
+        </div>
+
+        <button id="btn-roll" onclick="roll()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3.5 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-900/50 transition">
+            주사위 던지기
+        </button>
+        <button onclick="resetGame()" class="mt-3 text-xs text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-rotate-right"></i> 게임 리셋
+        </button>
+    </div>
+
+    <script>
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+        let playerHp = 100, compHp = 100, isRolling = false;
+
+        function playBeep(freq = 440) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        function roll() {
+            if(isRolling || playerHp <= 0 || compHp <= 0) return;
+            isRolling = true;
+            playBeep(520);
+
+            const pDiceEl = document.getElementById('p-dice');
+            const cDiceEl = document.getElementById('c-dice');
+            pDiceEl.classList.add('rolling');
+            cDiceEl.classList.add('rolling');
+
+            setTimeout(() => {
+                pDiceEl.classList.remove('rolling');
+                cDiceEl.classList.remove('rolling');
+
+                const pVal = Math.floor(Math.random() * 6) + 1;
+                const cVal = Math.floor(Math.random() * 6) + 1;
+
+                pDiceEl.innerText = diceIcons[pVal];
+                cDiceEl.innerText = diceIcons[cVal];
+                document.getElementById('p-val').innerText = pVal + ' 점';
+                document.getElementById('c-val').innerText = cVal + ' 점';
+
+                const resEl = document.getElementById('result');
+                const diff = Math.abs(pVal - cVal) * 10;
+
+                if(pVal > cVal) {
+                    compHp = Math.max(0, compHp - diff);
+                    resEl.innerText = \`🎉 플레이어 승! 컴퓨터에게 \${diff} 데미지!\`;
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-emerald-400';
+                    playBeep(880);
+                } else if(cVal > pVal) {
+                    playerHp = Math.max(0, playerHp - diff);
+                    resEl.innerText = \`💥 컴퓨터 승! 플레이어에게 \${diff} 데미지!\`;
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-rose-400';
+                    playBeep(220);
+                } else {
+                    resEl.innerText = '🤝 무승부! 데미지 없음';
+                    resEl.className = 'text-base font-bold mb-6 h-8 flex items-center justify-center text-amber-400';
+                }
+
+                updateHp();
+                isRolling = false;
+            }, 600);
+        }
+
+        function updateHp() {
+            document.getElementById('p-hp-text').innerText = \`HP \${playerHp}\`;
+            document.getElementById('c-hp-text').innerText = \`HP \${compHp}\`;
+            document.getElementById('p-hp-bar').style.width = playerHp + '%';
+            document.getElementById('c-hp-bar').style.width = compHp + '%';
+
+            if(playerHp <= 0) {
+                document.getElementById('result').innerText = '☠️ 패배하셨습니다. 다시 도전하세요!';
+                document.getElementById('btn-roll').disabled = true;
+            } else if(compHp <= 0) {
+                document.getElementById('result').innerText = '🏆 최종 승리하셨습니다!';
+                document.getElementById('btn-roll').disabled = true;
+            }
+        }
+
+        function resetGame() {
+            playerHp = 100; compHp = 100; isRolling = false;
+            document.getElementById('p-dice').innerText = '🎲';
+            document.getElementById('c-dice').innerText = '🎲';
+            document.getElementById('p-val').innerText = '준비';
+            document.getElementById('c-val').innerText = '준비';
+            document.getElementById('result').innerText = '주사위를 던져 대결을 시작하세요!';
+            document.getElementById('btn-roll').disabled = false;
+            updateHp();
+        }
+    <\/script>
+</body>
+</html>`
+            },
+            {
+                id: 'dice_21',
+                title: '주사위 21 맞추기',
+                filename: 'dice_21.html',
+                badge: 'Strategy',
+                color: 'purple',
+                icon: 'fa-bullseye',
+                desc: '블랙잭 스타일의 주사위 게임! 숫자를 21에 가장 가깝게 만들어 컴퓨터보다 높게 만드세요.',
+                tags: ['Blackjack', 'Risk', '21'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 21 맞추기 (Dice 21)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-purple-400 mb-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bullseye"></i> 주사위 21 맞추기
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 던져 21 이하로 컴퓨터보다 높은 합을 만드세요!</p>
+
+        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-700 mb-6">
+            <div class="text-xs text-slate-400 mb-1">나의 합계</div>
+            <div id="score" class="text-5xl font-black text-purple-300">0</div>
+            <div id="dice-history" class="text-xs text-slate-400 mt-3 min-h-[20px]">사용한 주사위: -</div>
+        </div>
+
+        <div id="msg" class="text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400">
+            [던지기] 또는 [멈추기]를 선택하세요.
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <button id="btn-roll" onclick="roll()" class="bg-purple-600 hover:bg-purple-500 py-3 rounded-2xl font-bold shadow-lg shadow-purple-900/40">🎲 던지기 (Hit)</button>
+            <button id="btn-stand" onclick="stand()" class="bg-slate-700 hover:bg-slate-600 py-3 rounded-2xl font-bold border border-slate-600">✋ 멈추기 (Stand)</button>
+        </div>
+
+        <button onclick="resetGame()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">
+            새 게임 시작
+        </button>
+    </div>
+
+    <script>
+        let total = 0, history = [], playing = true;
+
+        function roll() {
+            if(!playing) return;
+            const dice = Math.floor(Math.random() * 6) + 1;
+            total += dice;
+            history.push(dice);
+
+            document.getElementById('score').innerText = total;
+            document.getElementById('dice-history').innerText = '사용한 주사위: ' + history.join(', ');
+
+            if(total > 21) {
+                playing = false;
+                document.getElementById('msg').innerText = '💥 21 초과! 버스트 패배!';
+                document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-rose-400';
+            } else if(total === 21) {
+                playing = false;
+                document.getElementById('msg').innerText = '🎉 PERFECT 21! 승리!';
+                document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-emerald-400';
+            }
+        }
+
+        function stand() {
+            if(!playing || total === 0) return;
+            playing = false;
+
+            // Computer turn logic
+            let compTotal = 0;
+            while(compTotal < 16) {
+                compTotal += Math.floor(Math.random() * 6) + 1;
+            }
+
+            const msgEl = document.getElementById('msg');
+            if(compTotal > 21 || total > compTotal) {
+                msgEl.innerText = \`🎉 승리! (나: \${total}점 vs 컴퓨터: \${compTotal > 21 ? '버스트' : compTotal + '점'})\`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-emerald-400';
+            } else if(compTotal > total) {
+                msgEl.innerText = \`💀 패배! (나: \${total}점 vs 컴퓨터: \${compTotal}점)\`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-rose-400';
+            } else {
+                msgEl.innerText = \`🤝 무승부! (\${total}점 동점)\`;
+                msgEl.className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400';
+            }
+        }
+
+        function resetGame() {
+            total = 0; history = []; playing = true;
+            document.getElementById('score').innerText = '0';
+            document.getElementById('dice-history').innerText = '사용한 주사위: -';
+            document.getElementById('msg').innerText = '[던지기] 또는 [멈추기]를 선택하세요.';
+            document.getElementById('msg').className = 'text-sm font-bold mb-6 h-6 flex items-center justify-center text-amber-400';
+        }
+    <\/script>
+</body>
+</html>`
+            },
+            {
+                id: 'pig_game',
+                title: '피그 게임 (Pig Game)',
+                filename: 'pig_game.html',
+                badge: 'Risk & Reward',
+                color: 'pink',
+                icon: 'fa-piggy-bank',
+                desc: '욕심과 절제의 주사위 게임! 주사위 1이 나오면 이번 턴 점수를 모두 잃습니다 (목표: 50점).',
+                tags: ['Push Your Luck', '2 Players', '50 Pts'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>피그 게임 (Pig Game)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center">
+        <h1 class="text-2xl font-black text-pink-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-piggy-bank"></i> Pig Game (피그 게임)
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">숫자 **1**이 나오면 턴 점수 리셋! 50점을 먼저 채우세요.</p>
+
+        <!-- Player Scores -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div id="p0-card" class="bg-slate-900/80 p-4 rounded-2xl border-2 border-pink-500 transition-all">
+                <div class="text-xs font-bold text-slate-400">Player 1</div>
+                <div id="score-0" class="text-4xl font-black my-2 text-pink-400">0</div>
+                <div class="bg-slate-800 py-1 px-2 rounded-lg text-xs">턴 점수: <span id="current-0" class="font-bold text-amber-300">0</span></div>
+            </div>
+            <div id="p1-card" class="bg-slate-900/40 p-4 rounded-2xl border-2 border-transparent transition-all">
+                <div class="text-xs font-bold text-slate-400">Player 2</div>
+                <div id="score-1" class="text-4xl font-black my-2 text-pink-400">0</div>
+                <div class="bg-slate-800 py-1 px-2 rounded-lg text-xs">턴 점수: <span id="current-1" class="font-bold text-amber-300">0</span></div>
+            </div>
+        </div>
+
+        <div id="dice-view" class="text-6xl mb-4">🎲</div>
+        <div id="status-msg" class="text-xs font-semibold text-slate-300 mb-6 h-4">Player 1의 차례입니다.</div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <button onclick="rollDice()" class="bg-pink-600 hover:bg-pink-500 py-3 rounded-2xl font-bold shadow-lg shadow-pink-900/40">🎲 주사위 던지기</button>
+            <button onclick="holdScore()" class="bg-emerald-600 hover:bg-emerald-500 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-900/40">📥 점수 저장 (Hold)</button>
+        </div>
+
+        <button onclick="initGame()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">
+            게임 리셋
+        </button>
+    </div>
+
+    <script>
+        let scores, currentScore, activePlayer, playing;
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function initGame() {
+            scores = [0, 0]; currentScore = 0; activePlayer = 0; playing = true;
+            document.getElementById('score-0').innerText = '0';
+            document.getElementById('score-1').innerText = '0';
+            document.getElementById('current-0').innerText = '0';
+            document.getElementById('current-1').innerText = '0';
+            document.getElementById('dice-view').innerText = '🎲';
+            document.getElementById('status-msg').innerText = 'Player 1의 차례입니다.';
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('p0-card').className = activePlayer === 0 ? 'bg-slate-900/80 p-4 rounded-2xl border-2 border-pink-500 transition-all' : 'bg-slate-900/40 p-4 rounded-2xl border-2 border-transparent transition-all';
+            document.getElementById('p1-card').className = activePlayer === 1 ? 'bg-slate-900/80 p-4 rounded-2xl border-2 border-pink-500 transition-all' : 'bg-slate-900/40 p-4 rounded-2xl border-2 border-transparent transition-all';
+        }
+
+        function switchPlayer() {
+            document.getElementById('current-' + activePlayer).innerText = '0';
+            currentScore = 0;
+            activePlayer = activePlayer === 0 ? 1 : 0;
+            updateUI();
+            document.getElementById('status-msg').innerText = \`Player \${activePlayer + 1}의 차례입니다.\`;
+        }
+
+        function rollDice() {
+            if(!playing) return;
+            const dice = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice-view').innerText = diceIcons[dice];
+
+            if(dice !== 1) {
+                currentScore += dice;
+                document.getElementById('current-' + activePlayer).innerText = currentScore;
+            } else {
+                document.getElementById('status-msg').innerText = '💥 1이 나왔습니다! 턴 점수를 모두 잃습니다.';
+                setTimeout(switchPlayer, 1000);
+            }
+        }
+
+        function holdScore() {
+            if(!playing || currentScore === 0) return;
+            scores[activePlayer] += currentScore;
+            document.getElementById('score-' + activePlayer).innerText = scores[activePlayer];
+
+            if(scores[activePlayer] >= 50) {
+                playing = false;
+                document.getElementById('status-msg').innerText = \`🎉 Player \${activePlayer + 1} 최종 승리!\`;
+            } else {
+                switchPlayer();
+            }
+        }
+
+        initGame();
+    <\/script>
+</body>
+</html>`
+            },
+            {
+                id: 'dice_baseball',
+                title: '주사위 숫자 야구',
+                filename: 'dice_baseball.html',
+                badge: 'Deduction',
+                color: 'amber',
+                icon: 'fa-baseball-bat-ball',
+                desc: '컴퓨터의 비밀 숫자 조합을 주사위 3개를 던져 스트라이크/볼 힌트로 맞히는 추리 게임입니다.',
+                tags: ['Baseball', 'Puzzle', 'Logic'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 숫자 야구 (Dice Baseball)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-amber-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-baseball-bat-ball"></i> 주사위 숫자 야구
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위 3개를 던져 비밀 숫자(1~6) 조합을 추리하세요!</p>
+
+        <!-- Current Dice -->
+        <div id="dice-display" class="flex justify-center gap-3 text-4xl mb-6">
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">🎲</div>
+        </div>
+
+        <button onclick="pitch()" class="w-full bg-amber-600 hover:bg-amber-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-amber-900/40 mb-6">
+            ⚾ 주사위 3개 투척 & 판정
+        </button>
+
+        <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 text-left">
+            <div class="text-xs font-bold text-slate-400 mb-2 flex justify-between">
+                <span>투구 기록 로그</span>
+                <span id="try-count" class="text-amber-400">0회 시도</span>
+            </div>
+            <div id="logs" class="space-y-1.5 text-xs max-h-36 overflow-y-auto pr-1"></div>
+        </div>
+
+        <button onclick="initGame()" class="mt-4 text-xs text-slate-400 hover:text-slate-200">새 게임 시작</button>
+    </div>
+
+    <script>
+        let secret = [], attempts = 0;
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function initGame() {
+            secret = []; attempts = 0;
+            while(secret.length < 3) {
+                let r = Math.floor(Math.random() * 6) + 1;
+                if(!secret.includes(r)) secret.push(r);
+            }
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('try-count').innerText = '0회 시도';
+        }
+
+        function pitch() {
+            if(secret.length === 0) return;
+            attempts++;
+            let roll = [];
+            while(roll.length < 3) {
+                let r = Math.floor(Math.random() * 6) + 1;
+                if(!roll.includes(r)) roll.push(r);
+            }
+
+            document.getElementById('dice-display').innerHTML = roll.map(v => 
+                \`<div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700">\${diceIcons[v]}</div>\`
+            ).join('');
+
+            let strike = 0, ball = 0;
+            for(let i=0; i<3; i++) {
+                if(roll[i] === secret[i]) strike++;
+                else if(secret.includes(roll[i])) ball++;
+            }
+
+            const log = document.createElement('div');
+            log.className = "flex justify-between items-center bg-slate-800/50 p-2 rounded-lg border border-slate-700/50";
+            log.innerHTML = \`
+                <span class="font-bold text-slate-300">#\${attempts}차: [\${roll.join(', ')}]</span>
+                <span class="font-black \${strike === 3 ? 'text-emerald-400' : 'text-amber-400'}">\${strike}S \${ball}B</span>
+            \`;
+            document.getElementById('logs').prepend(log);
+            document.getElementById('try-count').innerText = attempts + '회 시도';
+
+            if(strike === 3) {
+                setTimeout(() => {
+                    alert(\`🎉 정답입니다! \${attempts}회 만에 삼진 아웃 성공!\`);
+                    initGame();
+                }, 100);
+            }
+        }
+
+        initGame();
+    <\/script>
+</body>
+</html>`
+            },
+            {
+                id: 'dice_race',
+                title: '주사위 레이싱',
+                filename: 'dice_race.html',
+                badge: 'Racing',
+                color: 'emerald',
+                icon: 'fa-flag-checkered',
+                desc: '특수 칸(부스터, 뒤로 가기)이 설치된 30칸 레이스 트랙에서 1등으로 도착하는 경주 게임입니다.',
+                tags: ['Race', 'Board Game', 'Speed'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 레이싱 (Dice Race)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center">
+        <h1 class="text-2xl font-black text-emerald-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-flag-checkered"></i> 주사위 레이싱
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 던져 30번째 결승선에 먼저 도착하세요!</p>
+
+        <!-- Progress Bars -->
+        <div class="space-y-4 mb-6">
+            <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-blue-400"><i class="fa-solid fa-car"></i> 플레이어</span>
+                    <span id="p-pos" class="text-slate-300">0 / 30</span>
+                </div>
+                <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden">
+                    <div id="p-bar" class="bg-blue-500 h-full w-0% transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-rose-400"><i class="fa-solid fa-robot"></i> 컴퓨터</span>
+                    <span id="c-pos" class="text-slate-300">0 / 30</span>
+                </div>
+                <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden">
+                    <div id="c-bar" class="bg-rose-500 h-full w-0% transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="log" class="text-sm font-bold text-amber-300 h-8 flex items-center justify-center mb-6">
+            주사위를 던져 전진하세요!
+        </div>
+
+        <button onclick="step()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-900/40">
+            🎲 주사위 던지기
+        </button>
+
+        <button onclick="resetGame()" class="mt-4 text-xs text-slate-400 hover:text-slate-200">
+            재경기 시작
+        </button>
+    </div>
+
+    <script>
+        let pPos = 0, cPos = 0;
+
+        function step() {
+            if(pPos >= 30 || cPos >= 30) return;
+
+            const pRoll = Math.floor(Math.random() * 6) + 1;
+            const cRoll = Math.floor(Math.random() * 6) + 1;
+
+            pPos = Math.min(30, pPos + pRoll);
+            cPos = Math.min(30, cPos + cRoll);
+
+            // Special event logic (Booster / Trap)
+            let pEvent = "", cEvent = "";
+            if(pPos === 10 || pPos === 20) { pPos += 3; pEvent = "🚀 부스터 (+3)!"; }
+            if(pPos === 15 || pPos === 25) { pPos = Math.max(0, pPos - 3); pEvent = "⚠️ 함정 (-3)!"; }
+
+            updateUI();
+
+            const logEl = document.getElementById('log');
+            if(pPos >= 30 && cPos >= 30) logEl.innerText = "🤝 동시 도착! 무승부!";
+            else if(pPos >= 30) logEl.innerText = "🎉 플레이어 결승선 도착! 승리!";
+            else if(cPos >= 30) logEl.innerText = "💀 컴퓨터 결승선 도착! 패배!";
+            else logEl.innerText = \`나: +\${pRoll} \${pEvent} | 컴퓨터: +\${cRoll}\`;
+        }
+
+        function updateUI() {
+            document.getElementById('p-pos').innerText = \`\${pPos} / 30\`;
+            document.getElementById('c-pos').innerText = \`\${cPos} / 30\`;
+            document.getElementById('p-bar').style.width = (pPos / 30 * 100) + '%';
+            document.getElementById('c-bar').style.width = (cPos / 30 * 100) + '%';
+        }
+
+        function resetGame() {
+            pPos = 0; cPos = 0;
+            updateUI();
+            document.getElementById('log').innerText = "주사위를 던져 전진하세요!";
+        }
+    <\/script>
+</body>
+</html>`
+            },
+            {
+                id: 'dice_poker',
+                title: '주사위 포커 (Dice Poker)',
+                filename: 'dice_poker.html',
+                badge: 'Poker',
+                color: 'blue',
+                icon: 'fa-gem',
+                desc: '주사위 5개를 던지고 필요한 눈을 고정(Hold)해 풀하우스, 파이브 카인드 등의 족보를 완성하세요.',
+                tags: ['Poker', 'Hold', 'Cards'],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주사위 포커 (Dice Poker)</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="bg-slate-800/90 border border-slate-700 p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-2xl font-black text-blue-400 mb-1 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gem"></i> 주사위 포커
+        </h1>
+        <p class="text-xs text-slate-400 mb-6">주사위를 터치하여 **고정(Hold)**하고 재투척하세요!</p>
+
+        <!-- Dice Row -->
+        <div id="dice-container" class="flex justify-center gap-2 mb-6">
+            <!-- Dynamic 5 Dices -->
+        </div>
+
+        <div id="rank-text" class="text-lg font-black text-amber-300 h-8 flex items-center justify-center mb-6">
+            주사위를 던져주세요
+        </div>
+
+        <button onclick="roll()" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-900/40 mb-3">
+            🎲 주사위 던지기
+        </button>
+
+        <button onclick="resetHand()" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs text-slate-300">
+            고정 해제 & 리셋
+        </button>
+    </div>
+
+    <script>
+        let values = [1, 1, 1, 1, 1];
+        let holds = [false, false, false, false, false];
+        const diceIcons = ['🎲', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function render() {
+            const container = document.getElementById('dice-container');
+            container.innerHTML = '';
+            values.forEach((v, i) => {
+                const btn = document.createElement('button');
+                btn.className = \`text-3xl p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center \${holds[i] ? 'border-amber-400 bg-amber-500/20 scale-105' : 'border-slate-700 bg-slate-900/80'}\`;
+                btn.innerHTML = \`<span>\${diceIcons[v]}</span><span class="text-[10px] font-bold mt-1 \${holds[i] ? 'text-amber-400' : 'text-slate-500'}">\${holds[i] ? 'HOLD' : 'FREE'}</span>\`;
+                btn.onclick = () => { holds[i] = !holds[i]; render(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function roll() {
+            for(let i=0; i<5; i++) {
+                if(!holds[i]) values[i] = Math.floor(Math.random() * 6) + 1;
+            }
+            render();
+            evaluateHand();
+        }
+
+        function evaluateHand() {
+            const counts = {};
+            values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            const cVals = Object.values(counts).sort((a,b) => b-a);
+
+            let rank = "High Card (노족보)";
+            if(cVals[0] === 5) rank = "Five of a Kind! 👑";
+            else if(cVals[0] === 4) rank = "Four of a Kind! 🔥";
+            else if(cVals[0] === 3 && cVals[1] === 2) rank = "Full House! 🏠";
+            else if(cVals[0] === 3) rank = "Three of a Kind! ✨";
+            else if(cVals[0] === 2 && cVals[1] === 2) rank = "Two Pair! ✌️";
+            else if(cVals[0] === 2) rank = "One Pair! 🔹";
+
+            document.getElementById('rank-text').innerText = rank;
+        }
+
+        function resetHand() {
+            holds = [false, false, false, false, false];
+            render();
+        }
+
+        render();
+    <\/script>
+</body>
+</html>`
+            }
+        ];
+
+        // Render dynamic game cards
+        function renderCards() {
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = gamesData.map(game => `
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition duration-300 shadow-xl group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-${game.color}-500/20 text-${game.color}-400 text-xs font-bold px-3 py-1 rounded-full border border-${game.color}-500/30">
+                                ${game.badge}
+                            </span>
+                            <div class="text-${game.color}-400 text-2xl group-hover:scale-110 transition">
+                                <i class="fa-solid ${game.icon}"></i>
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-white mb-2">${game.title}</h4>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">${game.desc}</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            ${game.tags.map(t => `<span class="bg-slate-800/80 text-slate-400 text-[10px] px-2.5 py-0.5 rounded-md border border-slate-700/50">#${t}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="playGame('${game.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i> 즉시 플레이
+                            </button>
+                            <button onclick="viewCode('${game.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                                <i class="fa-solid fa-code"></i> 소스 보기
+                            </button>
+                        </div>
+                        <button onclick="downloadGame('${game.id}')" class="w-full bg-slate-900/80 hover:bg-emerald-600 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition">
+                            <i class="fa-solid fa-download"></i> ${game.filename} 다운로드
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Play Game in Modal
+        function playGame(id) {
+            const game = gamesData.find(g => g.id === id);
+            if(!game) return;
+
+            document.getElementById('modal-game-title').innerText = game.title;
+            document.getElementById('modal-game-file').innerText = game.filename;
+            document.getElementById('modal-download-btn').onclick = () => downloadGame(id);
+
+            const iframe = document.getElementById('game-iframe');
+            iframe.srcdoc = game.code;
+
+            document.getElementById('play-modal').classList.remove('hidden');
+        }
+
+        function closePlayModal() {
+            document.getElementById('play-modal').classList.add('hidden');
+            document.getElementById('game-iframe').srcdoc = '';
+        }
+
+        // View Code in Modal
+        function viewCode(id) {
+            let title = "", filename = "", code = "";
+
+            if(id === 'index') {
+                title = "메인 아케이드 허브 (index.html)";
+                filename = "index.html";
+                code = document.documentElement.outerHTML;
+            } else {
+                const game = gamesData.find(g => g.id === id);
+                if(!game) return;
+                title = game.title;
+                filename = game.filename;
+                code = game.code;
+            }
+
+            document.getElementById('code-modal-title').innerText = title;
+            document.getElementById('code-modal-file').innerText = filename;
+            document.getElementById('code-textarea').value = code;
+            document.getElementById('code-modal-download-btn').onclick = () => id === 'index' ? downloadSelfIndex() : downloadGame(id);
+
+            document.getElementById('code-modal').classList.remove('hidden');
+        }
+
+        function closeCodeModal() {
+            document.getElementById('code-modal').classList.add('hidden');
+        }
+
+        function copyCode() {
+            const textarea = document.getElementById('code-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            alert('소스 코드가 클립보드에 복사되었습니다.');
+        }
+
+        // Download Single Game HTML
+        function downloadGame(id) {
+            const game = gamesData.find(g => g.id === id);
+            if(!game) return;
+            triggerDownload(game.filename, game.code);
+        }
+
+        // Download Current index.html
+        function downloadSelfIndex() {
+            const currentHTML = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            triggerDownload('index.html', currentHTML);
+        }
+
+        // Helper File Downloader
+        function triggerDownload(filename, textContent) {
+            const blob = new Blob([textContent], { type: 'text/html;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // Download All 7 Files as ZIP
+        function downloadAllZip() {
+            if(typeof JSZip === 'undefined') {
+                alert('JSZip 라이브러리를 로드 중입니다. 잠시 후 다시 시도해 주세요.');
+                return;
+            }
+
+            const zip = new JSZip();
+            
+            // Add index.html
+            const indexContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            zip.file("index.html", indexContent);
+
+            // Add all 6 games
+            gamesData.forEach(game => {
+                zip.file(game.filename, game.code);
+            });
+
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = "Dice_Games_Complete_Pack.zip";
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
+        }
+
+        // Initialize App
+        window.onload = function() {
+            renderCards();
+        };
+    </script>
+
+</body></html>
